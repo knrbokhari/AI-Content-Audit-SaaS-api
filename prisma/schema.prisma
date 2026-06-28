@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PlanStatus {
+  none
+  active
+  offline
+}
+
+enum PlanType {
+  free
+  paid
+}
+
+enum Action {
+  view
+  create
+  update
+  delete
+}
+
+model Role {
+  id             Int          @id @default(autoincrement())
+  name           String
+  slug           String       @unique
+  users          User[]
+  permissions    Permission[]
+  organizationId Int
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  isSystem       Boolean      @default(false)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Resource {
+  id          Int          @id @default(autoincrement())
+  name        String
+  slug        String       @unique
+  permissions Permission[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Permission {
+  id         Int      @id @default(autoincrement())
+  roleId     Int
+  resourceId Int
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  action     Action
+  createdAt  DateTime @default(now())
+
+  @@unique([roleId, resourceId, action])
+}
+
+model Organization {
+  id     Int    @id @default(autoincrement())
+  name   String
+  domain String
+
+  country String?
+  roles   Role[]
+  users   User[]
+}
+
+model User {
+  id       Int     @id @default(autoincrement())
+  email    String  @unique
+  name     String
+  phone    String?
+  password String
+
+  is_verify     Boolean @default(false)
+  is_2fa_active Boolean @default(false)
+  secret        String?
+
+  code                   String?
+  reset_password_expires DateTime?
+
+  plane       String?
+  plan_status PlanStatus?
+  plan_type   PlanType?
+
+  organizationId Int?
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+
+  roleId Int
+  role   Role @relation(fields: [roleId], references: [id])
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+}
