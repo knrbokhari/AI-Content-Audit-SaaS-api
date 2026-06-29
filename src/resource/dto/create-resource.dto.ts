@@ -1,1 +1,3 @@
-export class CreateResourceDto {}
+export class CreateResourceDto {
+  name!: string;
+}
