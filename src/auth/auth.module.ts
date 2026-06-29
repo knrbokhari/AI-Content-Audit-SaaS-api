@@ -14,6 +14,7 @@ import { EmailModule } from 'src/email/email.module';
     EmailModule,
     JwtModule.registerAsync({
       useFactory: () => ({
+        global: true,
         secret: process.env.JWT_SECRET,
         signOptions: { expiresIn: '7d' },
       }),

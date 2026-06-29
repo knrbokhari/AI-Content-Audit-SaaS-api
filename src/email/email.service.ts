@@ -1,7 +1,12 @@
-import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import { Transporter } from 'nodemailer';
+import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { emailTemplates } from './templates/email.templates';
 
 @Injectable()
@@ -11,17 +16,19 @@ export class EmailService {
   private readonly from: string;
 
   constructor(private config: ConfigService) {
-    this.from = `"ContentPilot AI" <${this.config.getOrThrow<string>('MAIL_FROM')}>`;
+    this.from = `"ContentPilot AI" <${process.env.SMTP_HOST}>`;
 
-    this.transporter = nodemailer.createTransport({
-      host: this.config.getOrThrow<string>('MAIL_HOST'),
-      port: this.config.get<number>('MAIL_PORT', 587),
-      secure: this.config.get<boolean>('MAIL_SECURE', false),
+    const transportOptions: SMTPTransport.Options = {
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT || 587),
+      secure: false,
       auth: {
-        user: this.config.getOrThrow<string>('MAIL_USER'),
-        pass: this.config.getOrThrow<string>('MAIL_PASS'),
+        user: process.env.SMTP_EMAIL as string,
+        pass: process.env.SMTP_PASSWORD as string,
       },
-    });
+    };
+
+    this.transporter = nodemailer.createTransport(transportOptions);
   }
 
   async sendVerifyEmail(to: string, name: string, code: string): Promise<void> {
@@ -34,7 +41,11 @@ export class EmailService {
     await this.send(to, subject, html);
   }
 
-  async sendForgotPassword(to: string, name: string, code: string): Promise<void> {
+  async sendForgotPassword(
+    to: string,
+    name: string,
+    code: string,
+  ): Promise<void> {
     const { subject, html } = emailTemplates.forgotPassword(name, code);
     await this.send(to, subject, html);
   }
