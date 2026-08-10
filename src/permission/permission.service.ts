@@ -27,6 +27,7 @@ export class PermissionService {
       });
 
       if (permission) throw new BadRequestException('Permission Already Exist');
+
       const result = await this.prisma.permission.create({
         data: {
           role: {
@@ -45,7 +46,7 @@ export class PermissionService {
       return result;
     } catch (error) {
       console.log(error);
-      throw new InternalServerErrorException('Creating  Error');
+      throw new InternalServerErrorException(error);
     }
   }
   async findAll({ limit, page, search, sortedBy, orderBy }: any) {
@@ -105,9 +106,22 @@ export class PermissionService {
         where: whereClause,
         take: perPage,
         skip: (pageNumber - 1) * perPage,
-        include: {
-          resource: true,
-          role: true,
+        select: {
+          id: true,
+          roleId: true,
+          resourceId: true,
+          action: true,
+          createdAt: true,
+          resource: {
+            select: {
+              name: true,
+            },
+          },
+          role: {
+            select: {
+              name: true,
+            },
+          },
         },
       });
 
@@ -133,15 +147,18 @@ export class PermissionService {
         },
       });
 
-      if (isPermission) throw new BadRequestException('Permission Not Found');
+      if (!isPermission) throw new BadRequestException('Permission Not Found');
 
       const permission = await this.prisma.permission.findUnique({
         where: {
           id: id,
         },
-        include: {
-          resource: true,
-          role: true,
+        select: {
+          id: true,
+          action: true,
+          createdAt: true,
+          resourceId: true,
+          roleId: true,
         },
       });
       return permission;

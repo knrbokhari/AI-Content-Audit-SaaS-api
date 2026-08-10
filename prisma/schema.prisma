@@ -25,17 +25,27 @@ enum Action {
   delete
 }
 
+enum SubscriptionStatus {
+  active
+  trialing
+  past_due
+  canceled
+  inactive
+  incomplete
+  unpaid
+}
+
 model Role {
-  id             Int          @id @default(autoincrement())
+  id             Int           @id @default(autoincrement())
   name           String
-  slug           String       @unique
+  slug           String        @unique
   users          User[]
   permissions    Permission[]
   organizationId Int?
   organization   Organization? @relation(fields: [organizationId], references: [id])
-  isSystem       Boolean      @default(false)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  isSystem       Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 model Resource {
@@ -64,9 +74,25 @@ model Organization {
   name   String
   domain String
 
-  country String?
-  roles   Role[]
-  users   User[]
+  country       String?
+  roles         Role[]
+  users         User[]
+  subscriptions Subscriptions[]
+  branding      Branding[]
+}
+
+model Branding {
+  id                 Int          @id @default(autoincrement())
+  organizationId     Int
+  organization       Organization @relation(fields: [organizationId], references: [id])
+  logo               String?
+  primaryColor       String       @default("#4D8EF7")
+  secondaryColor     String       @default("#000000")
+  primaryColorDark   String       @default("#6BA3F9")
+  secondaryColorDark String       @default("#151922")
+  logoUrl            String       @default("")
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
 }
 
 model User {
@@ -95,4 +121,66 @@ model User {
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+}
+
+model Subscriptions {
+  id                   Int                @id @default(autoincrement())
+  organizationId       Int?
+  organization         Organization?      @relation(fields: [organizationId], references: [id])
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  stripePriceId        String?
+  planName             String?
+  status               SubscriptionStatus @default(inactive)
+  type                 PlanType
+  amount               Int                @default(0)
+  currency             String             @default("usd")
+  interval             String             @default("monthly")
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  trialEnd             DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  paymentMethod        PaymentMethod?     @relation(fields: [paymentMethodId], references: [id])
+  paymentMethodId      Int?
+  invoices             Invoice[]
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+}
+
+model PaymentMethod {
+  id                    Int    @id @default(autoincrement())
+  stripePaymentMethodId String
+  brand                 String
+  last4                 String
+  expMonth              Int
+  expYear               Int
+
+  subscriptions Subscriptions[]
+
+  @@map("paymentMethod")
+}
+
+model Invoice {
+  id               Int      @id @default(autoincrement())
+  stripeInvoiceId  String?  @unique
+  amount           Int
+  currency         String   @default("usd")
+  invoicePdf       String?
+  hostedInvoiceUrl String?
+  status           String   @default("paid")
+  date             DateTime
+
+  subscriptions   Subscriptions? @relation(fields: [subscriptionsId], references: [id])
+  subscriptionsId Int?
+}
+
+model PaymentGateway {
+  id                   Int    @id @default(autoincrement())
+  stripePublishableKey String @default("")
+  stripeSecretKey      String @default("")
+  stripeMode           String @default("test")
+  stripeWebhookSecret  String @default("")
+  currency             String @default("USD")
+  paymentSuccessUrl    String @default("")
+  paymentCancelUrl     String @default("")
 }

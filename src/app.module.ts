@@ -9,6 +9,10 @@ import { ResourceModule } from './resource/resource.module';
 import { PermissionModule } from './permission/permission.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ConfigModule } from '@nestjs/config';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
+import { PlansModule } from './plans/plans.module';
+import { WebhookModule } from './webhook/webhook.module';
+import { SettingsModule } from './settings/settings.module';
 
 @Module({
   imports: [
@@ -20,6 +24,10 @@ import { ConfigModule } from '@nestjs/config';
     ResourceModule,
     PermissionModule,
     PrismaModule,
+    SubscriptionsModule,
+    PlansModule,
+    WebhookModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
