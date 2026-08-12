@@ -27,10 +27,16 @@ export class SubscriptionsController {
     return this.subscriptionsService.create(createSubscriptionDto, user.id);
   }
 
-  // @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Get()
-  findAll(@Query() query: PaginationQueries) {
-    return this.subscriptionsService.findAll(query);
+  findAll(
+    @Query() query: PaginationQueries,
+    @CurrentUser() user: { organizationId: string },
+  ) {
+    return this.subscriptionsService.findAll({
+      ...query,
+      search: `${query.search}&organizationId=${user.organizationId}`,
+    });
   }
 
   @UseGuards(JwtAuthGuard)
@@ -49,5 +55,16 @@ export class SubscriptionsController {
   @Put(':id/cancel')
   cancel(@Param('id') id: string) {
     return this.subscriptionsService.cancelSubscription(+id);
+  }
+}
+
+@Controller('admin-subscriptions')
+export class AdminSubscriptionsController {
+  constructor(private readonly subscriptionsService: SubscriptionsService) {}
+
+  @UseGuards(JwtAuthGuard)
+  @Get()
+  findAll(@Query() query: PaginationQueries) {
+    return this.subscriptionsService.findAll({ ...query, isAdmin: true });
   }
 }

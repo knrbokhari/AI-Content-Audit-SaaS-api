@@ -4,6 +4,7 @@ export class PaginationQueries {
   search?: string;
   orderBy?: string;
   sortedBy?: SortOrder;
+  isAdmin?: boolean;
 }
 
 export enum SortOrder {

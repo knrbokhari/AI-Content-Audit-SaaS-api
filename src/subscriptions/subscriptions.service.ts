@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
@@ -118,7 +119,14 @@ export class SubscriptionsService {
     };
   }
 
-  async findAll({ limit, page, search, sortedBy, orderBy }: PaginationQueries) {
+  async findAll({
+    limit,
+    page,
+    search,
+    sortedBy,
+    orderBy,
+    isAdmin,
+  }: PaginationQueries) {
     try {
       const perPage = Number(limit) || 10;
       const pageNumber = Number(page) || 1;
@@ -153,9 +161,12 @@ export class SubscriptionsService {
         where: whereClause,
       });
       const url = `/subscriptions?search=${search}&limit=${limit}`;
+      let adminReport = {};
+      if (isAdmin) adminReport = this.simpleAdminReport();
 
       return {
         data: result,
+        ...(isAdmin && adminReport),
         ...paginate(totalCount, page, limit, result.length, url),
       };
     } catch (error: any) {
@@ -257,6 +268,66 @@ export class SubscriptionsService {
       throw new InternalServerErrorException(
         error.message || 'An error occurred while updating the subscription.',
       );
+    }
+  }
+
+  async simpleAdminReport() {
+    try {
+      const [
+        totalSubscription,
+        activeSubscriptions,
+        monthlyRecurring,
+        pastDue,
+        activePlans,
+      ] = await Promise.all([
+        // Total subscriptions
+        this.prisma.subscriptions.count(),
+
+        // Active subscriptions
+        this.prisma.subscriptions.count({
+          where: {
+            status: 'active',
+          },
+        }),
+
+        // Monthly recurring subscriptions
+        this.prisma.subscriptions.count({
+          where: {
+            status: 'active',
+            interval: 'monthly',
+          },
+        }),
+
+        // Past due subscriptions
+        this.prisma.subscriptions.count({
+          where: {
+            status: 'past_due',
+          },
+        }),
+
+        // Number of unique active plans
+        this.prisma.subscriptions.groupBy({
+          by: ['stripePriceId'],
+          where: {
+            status: 'active',
+            stripePriceId: {
+              not: null,
+            },
+          },
+        }),
+      ]);
+
+      return {
+        total_subscription: totalSubscription,
+        active_subscriptions: activeSubscriptions,
+        monthly_recurring: monthlyRecurring,
+        past_due: pastDue,
+        active_plans: activePlans.length,
+      };
+    } catch (error) {
+      console.error('Failed to generate admin report:', error);
+
+      throw new InternalServerErrorException('Failed to generate admin report');
     }
   }
 

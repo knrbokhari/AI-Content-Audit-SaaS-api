@@ -13,6 +13,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 import { PlansModule } from './plans/plans.module';
 import { WebhookModule } from './webhook/webhook.module';
 import { SettingsModule } from './settings/settings.module';
+import { OrganizationsModule } from './organizations/organizations.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { SettingsModule } from './settings/settings.module';
     PlansModule,
     WebhookModule,
     SettingsModule,
+    OrganizationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
