@@ -87,7 +87,7 @@ export class OrganizationsService {
         where: { id },
         include: {
           branding: true,
-          paymentMethod: true,
+          // paymentMethod: true,
           subscriptions: true,
         },
       });

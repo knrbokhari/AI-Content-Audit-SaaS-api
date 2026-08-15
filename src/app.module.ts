@@ -14,6 +14,8 @@ import { PlansModule } from './plans/plans.module';
 import { WebhookModule } from './webhook/webhook.module';
 import { SettingsModule } from './settings/settings.module';
 import { OrganizationsModule } from './organizations/organizations.module';
+import { WebsiteAuditsModule } from './website-audits/website-audits.module';
+import { AiModule } from './src/ai/ai.module';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { OrganizationsModule } from './organizations/organizations.module';
     WebhookModule,
     SettingsModule,
     OrganizationsModule,
+    WebsiteAuditsModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService],

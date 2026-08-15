@@ -35,6 +35,21 @@ enum SubscriptionStatus {
   unpaid
 }
 
+enum AuditStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+enum AuditSeverity {
+  critical
+  high
+  medium
+  low
+  info
+}
+
 model Role {
   id             Int           @id @default(autoincrement())
   name           String
@@ -79,6 +94,7 @@ model Organization {
   users         User[]
   subscriptions Subscriptions[]
   branding      Branding[]
+  audits        Audit[]
 }
 
 model Branding {
@@ -121,6 +137,7 @@ model User {
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+  audits     Audit[]
 }
 
 model Subscriptions {
@@ -183,4 +200,88 @@ model PaymentGateway {
   currency             String @default("USD")
   paymentSuccessUrl    String @default("")
   paymentCancelUrl     String @default("")
+}
+
+model Audit {
+  id             Int @id @default(autoincrement())
+  organizationId Int
+  createdById    Int
+
+  url         String
+  title       String?
+  description String?
+
+  status AuditStatus @default(pending)
+
+  // Overall scores
+  overallScore       Int?
+  seoScore           Int?
+  contentScore       Int?
+  readabilityScore   Int?
+  accessibilityScore Int?
+  performanceScore   Int?
+
+  // Page statistics
+  wordCount        Int?
+  readingTime      Int?
+  imageCount       Int?
+  imagesWithoutAlt Int?
+  internalLinks    Int?
+  externalLinks    Int?
+  brokenLinks      Int?
+
+  // SEO information
+  metaTitleLength       Int?
+  metaDescriptionLength Int?
+  h1Count               Int?
+  h2Count               Int?
+  h3Count               Int?
+  keywordDensity        Float?
+  primaryKeyword        String?
+
+  // Raw/extracted information
+  pageContent   String? @db.Text
+  headings      Json?
+  metadata      Json?
+  technicalData Json?
+
+  // AI information
+  aiAnalysis   Json?
+  aiModel      String?
+  aiTokensUsed Int?
+
+  errorMessage String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    User         @relation(fields: [createdById], references: [id])
+
+  recommendations AuditRecommendation[]
+
+  @@index([organizationId])
+  @@index([createdById])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model AuditRecommendation {
+  id      Int @id @default(autoincrement())
+  auditId Int
+
+  title       String
+  description String        @db.Text
+  category    String
+  severity    AuditSeverity
+
+  isResolved Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  audit Audit @relation(fields: [auditId], references: [id], onDelete: Cascade)
+
+  @@index([auditId])
+  @@index([severity])
 }
