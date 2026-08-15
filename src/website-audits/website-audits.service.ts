@@ -96,7 +96,20 @@ export class WebsiteAuditsService {
         metrics,
       });
 
-      // 5. Save audit
+      // 5. Store recommendations
+      if (aiResult.recommendations?.length) {
+        await this.prisma.auditRecommendation.createMany({
+          data: aiResult.recommendations.map((recommendation: any) => ({
+            auditId: audit.id,
+            title: recommendation.title,
+            description: recommendation.description,
+            category: recommendation.category,
+            severity: recommendation.severity,
+          })),
+        });
+      }
+
+      // 6. Save audit
       const completedAudit = await this.prisma.audit.update({
         where: {
           id: audit.id,
@@ -106,6 +119,7 @@ export class WebsiteAuditsService {
 
           title: pageData.title,
           description: pageData.description,
+          summary: aiResult.summary,
 
           overallScore: aiResult.overallScore,
           seoScore: aiResult.seoScore,
@@ -135,26 +149,16 @@ export class WebsiteAuditsService {
 
           headings: pageData.headings,
           metadata: pageData.metadata,
-          // technicalData: metrics,
+          // technicalData: JSON.parse(metrics),
 
-          // aiAnalysis: aiResult,
+          // aiAnalysis: JSON.parse(aiResult),
           aiModel: aiResult.model,
           aiTokensUsed: aiResult.tokensUsed,
         },
+        include: {
+          recommendations: true,
+        },
       });
-
-      // 6. Store recommendations
-      if (aiResult.recommendations?.length) {
-        await this.prisma.auditRecommendation.createMany({
-          data: aiResult.recommendations.map((recommendation: any) => ({
-            auditId: audit.id,
-            title: recommendation.title,
-            description: recommendation.description,
-            category: recommendation.category,
-            severity: recommendation.severity,
-          })),
-        });
-      }
 
       return completedAudit;
     } catch (error) {
@@ -207,7 +211,9 @@ export class WebsiteAuditsService {
         orderBy: orderByClause,
         take: perPage,
         skip: (pageNumber - 1) * perPage,
-        // select: {},
+        include: {
+          recommendations: true,
+        },
       });
 
       const totalCount = await this.prisma.audit.count({
@@ -228,8 +234,11 @@ export class WebsiteAuditsService {
 
   async findOne(id: number) {
     try {
-      const result = await this.prisma.subscriptions.findFirst({
+      const result = await this.prisma.audit.findFirst({
         where: { id },
+        include: {
+          recommendations: true,
+        },
       });
 
       if (!result) {
