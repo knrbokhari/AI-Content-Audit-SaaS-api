@@ -16,6 +16,7 @@ import { SettingsModule } from './settings/settings.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { WebsiteAuditsModule } from './website-audits/website-audits.module';
 import { AiModule } from './src/ai/ai.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { AiModule } from './src/ai/ai.module';
     OrganizationsModule,
     WebsiteAuditsModule,
     AiModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
