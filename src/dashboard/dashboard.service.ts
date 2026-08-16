@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -17,7 +18,7 @@ export class DashboardService {
         where: {
           organizationId,
         },
-        _count: {
+        _sum: {
           overallScore: true,
         },
       });
@@ -30,8 +31,9 @@ export class DashboardService {
       return {
         total_user,
         total_audit,
-        avg_audit_score: total_audit_score._count.overallScore / total_audit,
-        total_audit_score: total_audit_score._count.overallScore,
+        avg_audit_score:
+          (total_audit_score._sum.overallScore || 0) / total_audit,
+        total_audit_score: total_audit_score._sum.overallScore,
       };
     } catch (error: any) {
       throw new InternalServerErrorException(
@@ -47,7 +49,19 @@ export class DashboardService {
         orderBy: {
           id: 'desc',
         },
-        take: 5,
+        take: 4,
+        select: {
+          id: true,
+          overallScore: true,
+          seoScore: true,
+          createdAt: true,
+          url: true,
+          createdBy: {
+            select: {
+              name: true,
+            },
+          },
+        },
       });
 
       return res;
@@ -88,6 +102,21 @@ export class DashboardService {
           id: 'desc',
         },
         take: 3,
+        include: {
+          _count: {
+            select: {
+              users: true,
+              audits: true,
+            },
+          },
+          branding: true,
+          subscriptions: {
+            select: {
+              status: true,
+              planName: true,
+            },
+          },
+        },
       });
 
       return res;
@@ -122,6 +151,23 @@ export class DashboardService {
           id: 'desc',
         },
         take: 5,
+        select: {
+          name: true,
+          email: true,
+          phone: true,
+          plan_type: true,
+          role: {
+            select: {
+              name: true,
+            },
+          },
+          organization: {
+            select: {
+              name: true,
+            },
+          },
+          created_at: true,
+        },
       });
 
       return res;
