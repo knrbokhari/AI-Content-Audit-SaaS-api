@@ -93,13 +93,13 @@ model Organization {
   roles         Role[]
   users         User[]
   subscriptions Subscriptions[]
-  branding      Branding[]
+  branding      Branding?
   audits        Audit[]
 }
 
 model Branding {
   id                 Int          @id @default(autoincrement())
-  organizationId     Int
+  organizationId     Int @unique
   organization       Organization @relation(fields: [organizationId], references: [id])
   logo               String?
   primaryColor       String       @default("#4D8EF7")

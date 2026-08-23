@@ -35,20 +35,20 @@ export class SubscriptionsController {
   ) {
     return this.subscriptionsService.findAll({
       ...query,
-      search: `${query.search}&organizationId=${user.organizationId}`,
+      search: `${query.search};organizationId:${user.organizationId}`,
     });
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.subscriptionsService.findOne(+id);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('stripe-publishable-key')
   getStripePublishableKey() {
     return this.subscriptionsService.getStripePublishableKey();
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.subscriptionsService.findOne(+id);
   }
 
   @UseGuards(JwtAuthGuard)

@@ -272,7 +272,16 @@ export class AuthService {
       include: { role: true, organization: true },
     });
     if (!user) throw new UnauthorizedException();
-    return this.sanitize(user);
+
+    const permissions = await this.getUserPermissions(user.roleId);
+
+    const branding = await this.prisma.branding.findFirst({
+      where: {
+        organizationId: user.organizationId || 0,
+      },
+    });
+
+    return { user: this.sanitize(user), permissions, branding };
   }
 
   private async getUserPermissions(roleId: number): Promise<string[]> {

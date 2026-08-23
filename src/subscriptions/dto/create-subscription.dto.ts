@@ -1,5 +1,10 @@
+import { IsNotEmpty, IsString } from 'class-validator';
+
 export class CreateSubscriptionDto {
-  organizationId!: number;
+  @IsString()
   paymentMethodId!: string;
+
+  @IsString()
+  @IsNotEmpty()
   priceId?: string;
 }

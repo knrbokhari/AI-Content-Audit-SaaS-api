@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -56,6 +58,11 @@ export class WebhookService {
 
   private async subscriptionUpdated(subscription: Stripe.Subscription) {
     const price = subscription.items.data[0].price;
+    const stripe = await this.getStripe();
+
+    const result: any = await stripe.prices.retrieve(price.id, {
+      expand: ['product'],
+    });
 
     await this.prisma.subscriptions.updateMany({
       where: {
@@ -64,24 +71,35 @@ export class WebhookService {
       data: {
         stripeSubscriptionId: subscription.id,
         stripePriceId: price.id,
-
+        planName: result.product.name,
         status: subscription.status as any,
-
         amount: (price.unit_amount ?? 0) / 100,
-
         currency: price.currency,
-
         interval: price.recurring?.interval ?? 'month',
-
         currentPeriodStart: new Date(
           subscription.items.data[0].current_period_start * 1000,
         ),
-
         currentPeriodEnd: new Date(
           subscription.items.data[0].current_period_end * 1000,
         ),
-
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      },
+    });
+
+    const sub = await this.prisma.subscriptions.findFirst({
+      where: {
+        stripeCustomerId: subscription.customer as string,
+      },
+    });
+
+    await this.prisma.user.updateMany({
+      where: {
+        organizationId: sub?.organizationId,
+      },
+      data: {
+        plan_status: 'active',
+        plan_type: 'paid',
+        plane: price.id,
       },
     });
   }
@@ -98,6 +116,13 @@ export class WebhookService {
   }
 
   private async invoicePaid(invoice: Stripe.Invoice) {
+    const sub = await this.prisma.subscriptions.findFirst({
+      where: {
+        stripeSubscriptionId: invoice.parent?.subscription_details
+          ?.subscription as string,
+      },
+    });
+    console.log(sub, invoice.parent?.subscription_details);
     await this.prisma.invoice.create({
       data: {
         stripeInvoiceId: invoice.id,
@@ -107,9 +132,7 @@ export class WebhookService {
         hostedInvoiceUrl: invoice.hosted_invoice_url,
         status: 'paid',
         date: new Date(invoice.created * 1000),
-        subscriptionsId: Number(
-          invoice.parent?.subscription_details?.subscription,
-        ),
+        subscriptionsId: sub?.id || 3,
       },
     });
   }
@@ -118,15 +141,10 @@ export class WebhookService {
     await this.prisma.invoice.create({
       data: {
         stripeInvoiceId: invoice.id,
-
         amount: invoice.amount_due / 100,
-
         currency: invoice.currency,
-
         hostedInvoiceUrl: invoice.hosted_invoice_url,
-
         status: 'failed',
-
         date: new Date(invoice.created * 1000),
       },
     });

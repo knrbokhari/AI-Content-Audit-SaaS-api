@@ -44,22 +44,18 @@ export class OrganizationsService {
         orderBy: orderByClause,
         take: perPage,
         skip: (pageNumber - 1) * perPage,
-        select: {
-          id: true,
-          name: true,
-          users: {
+        include: {
+          _count: {
             select: {
-              id: true,
+              users: true,
+              audits: true,
             },
           },
-          domain: true,
+          branding: true,
           subscriptions: {
             select: {
-              amount: true,
               status: true,
               planName: true,
-              currentPeriodStart: true,
-              cancelAtPeriodEnd: true,
             },
           },
         },

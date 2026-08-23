@@ -51,7 +51,7 @@ export class PermissionService {
   }
   async findAll({ limit, page, search, sortedBy, orderBy }: any) {
     try {
-      const perPage = Number(limit) || 20;
+      const perPage = Number(limit) || 50;
       const pageNumber = Number(page) || 1;
       const parseSearchParams = search?.split(';') || [];
 
@@ -175,7 +175,7 @@ export class PermissionService {
         },
       });
 
-      if (isPermission) throw new BadRequestException('Permission Not Found');
+      if (!isPermission) throw new BadRequestException('Permission Not Found');
 
       const result = await this.prisma.permission.update({
         where: {
@@ -209,7 +209,7 @@ export class PermissionService {
         },
       });
 
-      if (isPermission) throw new BadRequestException('Permission Not Found');
+      if (!isPermission) throw new BadRequestException('Permission Not Found');
 
       await this.prisma.permission.delete({
         where: {

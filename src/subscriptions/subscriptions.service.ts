@@ -21,7 +21,7 @@ export class SubscriptionsService {
   constructor(private prisma: PrismaService) {}
 
   async create(dto: CreateSubscriptionDto, userId: number) {
-    const user = await this.prisma.user.findUnique({
+    const user: any = await this.prisma.user.findUnique({
       where: { id: userId },
     });
 
@@ -31,7 +31,7 @@ export class SubscriptionsService {
 
     const organization = await this.prisma.organization.findUnique({
       where: {
-        id: dto.organizationId,
+        id: user.organizationId,
       },
     });
 
@@ -47,19 +47,19 @@ export class SubscriptionsService {
 
     const stripe = await this.getStripe();
 
-    if (subscription?.stripeSubscriptionId) {
-      const stripeSubscription = await stripe.subscriptions.retrieve(
-        subscription.stripeSubscriptionId,
-      );
+    // if (subscription?.stripeSubscriptionId) {
+    //   const stripeSubscription = await stripe.subscriptions.retrieve(
+    //     subscription.stripeSubscriptionId,
+    //   );
 
-      if (
-        ['active', 'trialing', 'past_due'].includes(stripeSubscription.status)
-      ) {
-        throw new BadRequestException(
-          'Organization already has an active subscription',
-        );
-      }
-    }
+    //   if (
+    //     ['active', 'trialing', 'past_due'].includes(stripeSubscription.status)
+    //   ) {
+    //     throw new BadRequestException(
+    //       'Organization already has an active subscription',
+    //     );
+    //   }
+    // }
 
     let customerId = subscription?.stripeCustomerId;
 
@@ -231,14 +231,19 @@ export class SubscriptionsService {
       // return this.sanitizeSubscription(subscription, org);
     } catch (error: any) {
       throw new InternalServerErrorException(
-        error.message || 'An error occurred while fetching the subscription.',
+        error.error || 'An error occurred while fetching the subscription.',
       );
     }
   }
 
   async getStripePublishableKey() {
-    const paymentGateway = await this.prisma.paymentGateway.findFirst();
-    return paymentGateway?.stripePublishableKey;
+    try {
+      const paymentGateway = await this.prisma.paymentGateway.findFirst();
+      return paymentGateway?.stripePublishableKey;
+    } catch (error) {
+      // throw new
+      console.log(error);
+    }
   }
 
   async cancelSubscription(id: number) {

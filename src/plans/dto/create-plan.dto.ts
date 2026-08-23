@@ -1,4 +1,4 @@
-import { IsEmpty, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
 
 export class CreatePlanDto {
   @IsString()
@@ -6,15 +6,14 @@ export class CreatePlanDto {
   name!: string;
 
   @IsString()
-  @IsEmpty()
-  description!: string;
+  // @IsEmpty()
+  description?: string;
 
   @IsNumber()
   @IsNotEmpty()
   amount!: number;
 
   @IsString()
-  @IsEmpty()
   currency!: string;
 
   @IsString()
@@ -22,6 +21,6 @@ export class CreatePlanDto {
   interval: 'day' | 'week' | 'month' | 'year' = 'month';
 
   @IsString({ each: true })
-  @IsEmpty()
+  // @IsEmpty()
   features: Array<string> = [];
 }

@@ -79,15 +79,19 @@ export class PlansService {
   }
 
   async updatePlan(productId: string, data: UpdatePlanDto) {
-    const stripe = await this.getStripe();
+    try {
+      const stripe = await this.getStripe();
+      const features = data?.features || [];
+      const updatedProduct = await stripe.products.update(productId, {
+        name: data.name,
+        description: data.description,
+        metadata: { features: features.join(', ') },
+      });
 
-    const updatedProduct = stripe.products.update(productId, {
-      name: data.name,
-      description: data.description,
-      // metadata: { features: data?.features.join(', ') },
-    });
-
-    return this.sanitizePlan(updatedProduct);
+      return this.sanitizePlan(updatedProduct);
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   async archivePlan(productId: string) {

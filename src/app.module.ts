@@ -17,6 +17,7 @@ import { OrganizationsModule } from './organizations/organizations.module';
 import { WebsiteAuditsModule } from './website-audits/website-audits.module';
 import { AiModule } from './src/ai/ai.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { BrandingModule } from './branding/branding.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     WebsiteAuditsModule,
     AiModule,
     DashboardModule,
+    BrandingModule,
   ],
   controllers: [AppController],
   providers: [AppService],

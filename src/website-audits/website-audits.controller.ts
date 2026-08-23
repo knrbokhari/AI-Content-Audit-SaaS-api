@@ -35,7 +35,7 @@ export class WebsiteAuditsController {
   ) {
     return this.websiteAuditsService.findAll({
       ...query,
-      search: `${query.search}&organizationId=${user.organizationId}`,
+      search: `${query.search};organizationId:${user.organizationId}`,
     });
   }
 
