@@ -1,0 +1,33 @@
+# Ignore node_modules and npm debug log
+node_modules
+npm-debug.log
+
+# Ignore environment variables
+# .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Ignore logs
+logs
+*.log
+yarn-debug.log*
+yarn-error.log*
+
+# Ignore cache directories
+.cache
+.vscode
+.idea
+
+# Ignore build output
+# dist
+
+# Ignore Docker-specific files
+# Dockerfile
+# docker-compose.yml
+# .dockerignore
+
+# Prisma files that are generated
+# prisma/migrations
+# prisma/dev.db
