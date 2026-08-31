@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 import {
   BadRequestException,
   Injectable,
@@ -56,14 +57,17 @@ export class AuthService {
         data: { name: orgName, domain, country: dto.country },
       });
 
-      const role = await tx.role.create({
-        data: {
-          name: 'Super Admin',
-          slug: 'super_admin',
-          organizationId: org.id,
-          isSystem: true,
+      const role = await tx.role.findFirst({
+        where: {
+          slug: 'organization-admin',
         },
       });
+
+      if (!role) {
+        throw new BadRequestException(
+          'something want wrong please try again later',
+        );
+      }
 
       await tx.user.create({
         data: {
@@ -79,7 +83,7 @@ export class AuthService {
       });
     });
 
-    await this.email.sendVerifyEmail(dto.email, dto.name, code);
+    // await this.email.sendVerifyEmail(dto.email, dto.name, code);
     return { message: 'OTP sent. Please verify your email.', success: true };
   }
 
@@ -268,7 +272,16 @@ export class AuthService {
       include: { role: true, organization: true },
     });
     if (!user) throw new UnauthorizedException();
-    return this.sanitize(user);
+
+    const permissions = await this.getUserPermissions(user.roleId);
+
+    const branding = await this.prisma.branding.findFirst({
+      where: {
+        organizationId: user.organizationId || 0,
+      },
+    });
+
+    return { user: this.sanitize(user), permissions, branding };
   }
 
   private async getUserPermissions(roleId: number): Promise<string[]> {
@@ -294,6 +307,7 @@ export class AuthService {
   }
 
   private generateNumericOTP(length: number): string {
+    return '123456'; // For testing purposes, replace with actual OTP generation logic in production
     let otp = '';
     for (let i = 0; i < length; i++) {
       otp += Math.floor(Math.random() * 10).toString();

@@ -12,6 +12,7 @@ import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from 'src/generated/prisma/client';
+import { paginate } from 'src/common/pagination/paginate';
 
 @Injectable()
 export class PermissionService {
@@ -27,6 +28,7 @@ export class PermissionService {
       });
 
       if (permission) throw new BadRequestException('Permission Already Exist');
+
       const result = await this.prisma.permission.create({
         data: {
           role: {
@@ -45,12 +47,12 @@ export class PermissionService {
       return result;
     } catch (error) {
       console.log(error);
-      throw new InternalServerErrorException('Creating  Error');
+      throw new InternalServerErrorException(error);
     }
   }
   async findAll({ limit, page, search, sortedBy, orderBy }: any) {
     try {
-      const perPage = Number(limit) || 20;
+      const perPage = Number(limit) || 50;
       const pageNumber = Number(page) || 1;
       const parseSearchParams = search?.split(';') || [];
 
@@ -105,9 +107,22 @@ export class PermissionService {
         where: whereClause,
         take: perPage,
         skip: (pageNumber - 1) * perPage,
-        include: {
-          resource: true,
-          role: true,
+        select: {
+          id: true,
+          roleId: true,
+          resourceId: true,
+          action: true,
+          createdAt: true,
+          resource: {
+            select: {
+              name: true,
+            },
+          },
+          role: {
+            select: {
+              name: true,
+            },
+          },
         },
       });
 
@@ -118,7 +133,7 @@ export class PermissionService {
       const url = `/permission?search=${search}&limit=${limit}`;
       return {
         data: resources,
-        // ...paginate(totalCount, page, limit, resources.length, url),
+        ...paginate(totalCount, page, limit, resources.length, url),
       };
     } catch (error) {
       throw new InternalServerErrorException('Fetching  Error');
@@ -133,15 +148,18 @@ export class PermissionService {
         },
       });
 
-      if (isPermission) throw new BadRequestException('Permission Not Found');
+      if (!isPermission) throw new BadRequestException('Permission Not Found');
 
       const permission = await this.prisma.permission.findUnique({
         where: {
           id: id,
         },
-        include: {
-          resource: true,
-          role: true,
+        select: {
+          id: true,
+          action: true,
+          createdAt: true,
+          resourceId: true,
+          roleId: true,
         },
       });
       return permission;
@@ -158,7 +176,7 @@ export class PermissionService {
         },
       });
 
-      if (isPermission) throw new BadRequestException('Permission Not Found');
+      if (!isPermission) throw new BadRequestException('Permission Not Found');
 
       const result = await this.prisma.permission.update({
         where: {
@@ -192,7 +210,7 @@ export class PermissionService {
         },
       });
 
-      if (isPermission) throw new BadRequestException('Permission Not Found');
+      if (!isPermission) throw new BadRequestException('Permission Not Found');
 
       await this.prisma.permission.delete({
         where: {

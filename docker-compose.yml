@@ -1,0 +1,19 @@
+services:
+  nestjs-backend:
+    container_name: content-pilot-api 
+    build:
+      context: .
+    ports:
+      - '5000:5000'
+      - '5555:5555'
+    env_file:
+      - .env
+
+    environment:
+      NODE_ENV: production
+      TZ: Asia/Dhaka
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 515mb

@@ -25,17 +25,42 @@ enum Action {
   delete
 }
 
+enum SubscriptionStatus {
+  active
+  trialing
+  past_due
+  canceled
+  inactive
+  incomplete
+  unpaid
+}
+
+enum AuditStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+enum AuditSeverity {
+  critical
+  high
+  medium
+  low
+  info
+}
+
 model Role {
-  id             Int          @id @default(autoincrement())
+  id             Int           @id @default(autoincrement())
   name           String
-  slug           String       @unique
+  slug           String        @unique
   users          User[]
   permissions    Permission[]
   organizationId Int?
   organization   Organization? @relation(fields: [organizationId], references: [id])
-  isSystem       Boolean      @default(false)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  isSystem       Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 }
 
 model Resource {
@@ -64,9 +89,26 @@ model Organization {
   name   String
   domain String
 
-  country String?
-  roles   Role[]
-  users   User[]
+  country       String?
+  roles         Role[]
+  users         User[]
+  subscriptions Subscriptions[]
+  branding      Branding?
+  audits        Audit[]
+}
+
+model Branding {
+  id                 Int          @id @default(autoincrement())
+  organizationId     Int @unique
+  organization       Organization @relation(fields: [organizationId], references: [id])
+  logo               String?
+  primaryColor       String       @default("#4D8EF7")
+  secondaryColor     String       @default("#000000")
+  primaryColorDark   String       @default("#6BA3F9")
+  secondaryColorDark String       @default("#151922")
+  logoUrl            String       @default("")
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
 }
 
 model User {
@@ -95,4 +137,152 @@ model User {
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
+  audits     Audit[]
+}
+
+model Subscriptions {
+  id                   Int                @id @default(autoincrement())
+  organizationId       Int?
+  organization         Organization?      @relation(fields: [organizationId], references: [id])
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  stripePriceId        String?
+  planName             String?
+  status               SubscriptionStatus @default(inactive)
+  type                 PlanType
+  amount               Int                @default(0)
+  currency             String             @default("usd")
+  interval             String             @default("monthly")
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  trialEnd             DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  paymentMethod        PaymentMethod?     @relation(fields: [paymentMethodId], references: [id])
+  paymentMethodId      Int?
+  invoices             Invoice[]
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+}
+
+model PaymentMethod {
+  id                    Int    @id @default(autoincrement())
+  stripePaymentMethodId String
+  brand                 String
+  last4                 String
+  expMonth              Int
+  expYear               Int
+
+  subscriptions Subscriptions[]
+
+  @@map("paymentMethod")
+}
+
+model Invoice {
+  id               Int      @id @default(autoincrement())
+  stripeInvoiceId  String?  @unique
+  amount           Int
+  currency         String   @default("usd")
+  invoicePdf       String?
+  hostedInvoiceUrl String?
+  status           String   @default("paid")
+  date             DateTime
+
+  subscriptions   Subscriptions? @relation(fields: [subscriptionsId], references: [id])
+  subscriptionsId Int?
+}
+
+model PaymentGateway {
+  id                   Int    @id @default(autoincrement())
+  stripePublishableKey String @default("")
+  stripeSecretKey      String @default("")
+  stripeMode           String @default("test")
+  stripeWebhookSecret  String @default("")
+  currency             String @default("USD")
+  paymentSuccessUrl    String @default("")
+  paymentCancelUrl     String @default("")
+}
+
+model Audit {
+  id             Int @id @default(autoincrement())
+  organizationId Int
+  createdById    Int
+
+  url         String
+  title       String?
+  description String?
+  summary     String?
+
+  status AuditStatus @default(pending)
+
+  // Overall scores
+  overallScore       Int?
+  seoScore           Int?
+  contentScore       Int?
+  readabilityScore   Int?
+  accessibilityScore Int?
+  performanceScore   Int?
+
+  // Page statistics
+  wordCount        Int?
+  readingTime      Int?
+  imageCount       Int?
+  imagesWithoutAlt Int?
+  internalLinks    Int?
+  externalLinks    Int?
+  brokenLinks      Int?
+
+  // SEO information
+  metaTitleLength       Int?
+  metaDescriptionLength Int?
+  h1Count               Int?
+  h2Count               Int?
+  h3Count               Int?
+  keywordDensity        Float?
+  primaryKeyword        String?
+
+  // Raw/extracted information
+  pageContent   String? @db.Text
+  headings      Json?
+  metadata      Json?
+  technicalData Json?
+
+  // AI information
+  aiAnalysis   Json?
+  aiModel      String?
+  aiTokensUsed Int?
+
+  errorMessage String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy    User         @relation(fields: [createdById], references: [id])
+
+  recommendations AuditRecommendation[]
+
+  @@index([organizationId])
+  @@index([createdById])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model AuditRecommendation {
+  id      Int @id @default(autoincrement())
+  auditId Int
+
+  title       String
+  description String        @db.Text
+  category    String
+  severity    AuditSeverity
+
+  isResolved Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  audit Audit @relation(fields: [auditId], references: [id], onDelete: Cascade)
+
+  @@index([auditId])
+  @@index([severity])
 }
