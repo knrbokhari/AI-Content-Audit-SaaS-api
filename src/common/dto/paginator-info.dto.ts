@@ -1,10 +1,10 @@
 export class PaginatorInfo {
   count!: number;
-  current_page!: number;
+  currentPage!: number;
   firstItem!: number;
   lastItem!: number;
   last_page!: number;
-  per_page!: number;
+  perPage!: number;
   total!: number;
   'first_page_url': string;
   'last_page_url': string;

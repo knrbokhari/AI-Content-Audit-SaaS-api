@@ -12,6 +12,7 @@ import { CreateResourceDto } from './dto/create-resource.dto';
 import { UpdateResourceDto } from './dto/update-resource.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from 'src/generated/prisma/client';
+import { paginate } from 'src/common/pagination/paginate';
 
 @Injectable()
 export class ResourceService {
@@ -38,7 +39,7 @@ export class ResourceService {
   }
   async findAll({ limit, page, search, sortedBy, orderBy }: any) {
     try {
-      const perPage = Number(limit) || 20;
+      const perPage = Number(limit) || 10;
       const pageNumber = Number(page) || 1;
       const parseSearchParams = search?.split(';') || [];
 
@@ -70,7 +71,7 @@ export class ResourceService {
       const url = `/resource?search=${search}&limit=${limit}`;
       return {
         data: resources,
-        // ...paginate(totalCount, page, limit, resources.length, url),
+        ...paginate(totalCount, page, limit, resources.length, url),
       };
     } catch (error) {
       throw new InternalServerErrorException('Fetching  Error');

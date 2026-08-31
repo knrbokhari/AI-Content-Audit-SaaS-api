@@ -12,6 +12,7 @@ import { CreatePermissionDto } from './dto/create-permission.dto';
 import { UpdatePermissionDto } from './dto/update-permission.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from 'src/generated/prisma/client';
+import { paginate } from 'src/common/pagination/paginate';
 
 @Injectable()
 export class PermissionService {
@@ -132,7 +133,7 @@ export class PermissionService {
       const url = `/permission?search=${search}&limit=${limit}`;
       return {
         data: resources,
-        // ...paginate(totalCount, page, limit, resources.length, url),
+        ...paginate(totalCount, page, limit, resources.length, url),
       };
     } catch (error) {
       throw new InternalServerErrorException('Fetching  Error');

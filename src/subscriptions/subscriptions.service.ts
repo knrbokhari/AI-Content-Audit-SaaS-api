@@ -162,11 +162,11 @@ export class SubscriptionsService {
       });
       const url = `/subscriptions?search=${search}&limit=${limit}`;
       let adminReport = {};
-      if (isAdmin) adminReport = this.simpleAdminReport();
+      if (isAdmin) adminReport = await this.simpleAdminReport();
 
       return {
         data: result,
-        ...(isAdmin && adminReport),
+        ...(isAdmin && { adminReport }),
         ...paginate(totalCount, page, limit, result.length, url),
       };
     } catch (error: any) {

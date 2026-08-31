@@ -12,6 +12,7 @@ import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { Prisma } from 'src/generated/prisma/client';
+import { paginate } from 'src/common/pagination/paginate';
 
 @Injectable()
 export class RoleService {
@@ -76,7 +77,7 @@ export class RoleService {
       const url = `/role?search=${search}&limit=${limit}`;
       return {
         data: result,
-        // ...paginate(totalCount, page, limit, result.length, url),
+        ...paginate(totalCount, page, limit, result.length, url),
       };
     } catch (error) {
       throw new InternalServerErrorException('Fetching  Error');

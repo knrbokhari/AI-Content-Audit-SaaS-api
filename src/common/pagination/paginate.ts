@@ -22,12 +22,12 @@ export function paginate(
 
   return {
     total: totalItems,
-    current_page: +current_page,
+    currentPage: +current_page,
     count,
     last_page: totalPages,
     firstItem: 0 > startIndex ? 0 : startIndex,
     lastItem: 0 > endIndex ? 0 : endIndex,
-    per_page: pageSize,
+    perPage: Number(pageSize),
     first_page_url: `${process.env.API_URL}${url}&page=1`,
     last_page_url: `${process.env.API_URL}${url}&page=${totalPages}`,
     next_page_url:
