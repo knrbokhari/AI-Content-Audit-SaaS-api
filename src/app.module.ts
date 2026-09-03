@@ -18,6 +18,7 @@ import { WebsiteAuditsModule } from './website-audits/website-audits.module';
 import { AiModule } from './src/ai/ai.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { BrandingModule } from './branding/branding.module';
+import { AiUsesModule } from './ai-uses/ai-uses.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { BrandingModule } from './branding/branding.module';
     AiModule,
     DashboardModule,
     BrandingModule,
+    AiUsesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
