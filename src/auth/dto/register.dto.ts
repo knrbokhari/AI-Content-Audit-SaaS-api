@@ -62,6 +62,10 @@ export class ForgetPasswordDto {
   @IsEmail()
   @IsNotEmpty()
   email!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  recaptchaToken!: string;
 }
 
 export class ResetPasswordDto {
@@ -76,6 +80,10 @@ export class ResetPasswordDto {
   @IsString()
   @MinLength(8)
   password!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  recaptchaToken!: string;
 }
 
 export class Verify2FA {

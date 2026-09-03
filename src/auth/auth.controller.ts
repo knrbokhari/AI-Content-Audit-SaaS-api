@@ -7,6 +7,7 @@ import {
   ForgetPasswordDto,
   ResetPasswordDto,
   Verify2FA,
+  ChangePasswordDto,
 } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -36,6 +37,11 @@ export class AuthController {
     return this.authService.verifyEmail(dto);
   }
 
+  @Post('verify-otp')
+  verifyOtp(@Body() dto: VerifyEmailDto) {
+    return this.authService.verifyOtp(dto);
+  }
+
   @Post('resend-otp')
   resendOtp(@Body() dto: ResendOtpDto) {
     return this.authService.resendOtp(dto);
@@ -49,6 +55,15 @@ export class AuthController {
   @Post('reset-password')
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
+  }
+
+  @Post('change-password')
+  @UseGuards(JwtAuthGuard)
+  changePassword(
+    @CurrentUser() user: { id: number },
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(user.id, dto);
   }
 
   @Get('me')

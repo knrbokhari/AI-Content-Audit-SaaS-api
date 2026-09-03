@@ -16,7 +16,7 @@ export class EmailService {
   private readonly from: string;
 
   constructor(private config: ConfigService) {
-    this.from = `"ContentPilot AI" <${process.env.SMTP_HOST}>`;
+    this.from = `"${process.env.FROM_NAME}" <${process.env.FROM_EMAIL}>`;
 
     const transportOptions: SMTPTransport.Options = {
       host: process.env.SMTP_HOST,
@@ -53,6 +53,7 @@ export class EmailService {
   private async send(to: string, subject: string, html: string): Promise<void> {
     try {
       await this.transporter.sendMail({ from: this.from, to, subject, html });
+      this.logger.log(`Email sent to ${to}`);
     } catch (error) {
       this.logger.error(`Failed to send email to ${to}`, error);
       throw new InternalServerErrorException('Failed to send email');
