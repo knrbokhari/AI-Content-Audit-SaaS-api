@@ -20,6 +20,7 @@ import {
 } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { EmailService } from 'src/email/email.service';
+import axios from 'axios';
 
 const OTP_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -83,7 +84,7 @@ export class AuthService {
       });
     });
 
-    // await this.email.sendVerifyEmail(dto.email, dto.name, code);
+    await this.email.sendVerifyEmail(dto.email, dto.name, code);
     return { message: 'OTP sent. Please verify your email.', success: true };
   }
 
@@ -108,6 +109,23 @@ export class AuthService {
     });
 
     return { message: 'Email verified successfully', success: true };
+  }
+
+  async verifyOtp(dto: VerifyEmailDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+    if (!user) throw new NotFoundException('User not found');
+
+    if (
+      user.code !== dto.code ||
+      !user.reset_password_expires ||
+      user.reset_password_expires < new Date()
+    ) {
+      throw new BadRequestException('Invalid or expired OTP');
+    }
+
+    return { message: 'OTP verified successfully', success: true };
   }
 
   async resendOtp(dto: ResendOtpDto) {
@@ -197,9 +215,27 @@ export class AuthService {
   }
 
   async forgotPassword(dto: ForgetPasswordDto) {
+    const response: { data: { success: boolean } } = await axios.post(
+      `https://www.google.com/recaptcha/api/siteverify`,
+      null,
+      {
+        params: {
+          secret: process.env.GOOGLE_RECAPTCHA_SECRET_KEY,
+          response: dto?.recaptchaToken,
+        },
+      },
+    );
+
+    const { success } = response.data;
+
+    if (!success) {
+      throw new BadRequestException('reCAPTCHA verification failed');
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
+
     // Always return success to prevent email enumeration
     if (!user)
       return {
@@ -220,6 +256,23 @@ export class AuthService {
   }
 
   async resetPassword(dto: ResetPasswordDto) {
+    const response: { data: { success: boolean } } = await axios.post(
+      `https://www.google.com/recaptcha/api/siteverify`,
+      null,
+      {
+        params: {
+          secret: process.env.GOOGLE_RECAPTCHA_SECRET_KEY,
+          response: dto?.recaptchaToken,
+        },
+      },
+    );
+
+    const { success } = response.data;
+
+    if (!success) {
+      throw new BadRequestException('reCAPTCHA verification failed');
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
